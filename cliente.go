@@ -20,7 +20,11 @@ func main() {
 			fmt.Print("> ")
 			
 			input, _ := reader.ReadString('\n')
-			command := strings.TrimSpace(input)
+			// command := strings.TrimSpace(input)
+			line := strings.TrimSpace(input)
+			partes := strings.SplitN(line, " ", 2)
+			command := partes[0]
+			argumento := partes [1]
 			
 			switch command {
 			case "exit":	
@@ -88,5 +92,24 @@ func get() {
 }
 
 func info() {
-	fmt.Println("Hola desde info")
+	// fmt.Println("Hola desde info")
+	conn, err := net.Dial("tcp", name_node_socket)
+	if err != nil {
+		panic(err)
+	}
+	defer conn.Close()
+
+	// Enviar comando
+	conn.Write([]byte("INFO"))
+
+	// Leer respuesta
+	buf := make([]byte, 2048)
+	n, _ := conn.Read(buf)
+
+	var lista []string
+	json.Unmarshal(buf[:n], &lista)
+
+	for _, item := range lista {
+		fmt.Println(item)
+	}
 }

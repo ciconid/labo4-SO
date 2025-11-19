@@ -12,7 +12,7 @@ type BlockInfo struct {
 	Node string `json:"node"`
 }
 
-var lista_de_archivos = []string{"archivo1.txt", "archivo2.txt"} // esta lista la tiene que generar el propio name_node
+//var listaDeArchivos = []string{"archivo1.txt", "archivo2.txt"} // esta lista la tiene que generar el propio name_node
 
 func main() {
 	ln, err := net.Listen("tcp", ":9000")
@@ -38,7 +38,7 @@ func main() {
 func handle(conn net.Conn) {
 	defer conn.Close()
 
-	// Leer comando simple
+	// Leer comando del buffer
 	buf := make([]byte, 1024)
 	n, err := conn.Read(buf)
 	if err != nil {
@@ -47,23 +47,52 @@ func handle(conn net.Conn) {
 
 	comando := string(buf[:n])
 
-	// if comando == "LISTAR" {
-	// 	// Serializar a JSON
-	// 	jsonData, _ := json.Marshal(lista_de_archivos)
-	// 	conn.Write(jsonData)
-	// }
 	switch comando {
 		case "LISTAR":
+			listaDeArchivos := crearListaArchivos()
+
 			// Serializar a JSON
-			jsonData, _ := json.Marshal(lista_de_archivos)
+			jsonData, _ := json.Marshal(listaDeArchivos)
 			conn.Write(jsonData)
+		case "INFO":
+			infoArchivo := obtenerInfoArchivo(nombreArchivo)
+
+			jsonData, _ := json.Marshal(infoArchivo)
+			conn.Write(jsonData)
+
 	}
 
 }
 
-func crearListaArchivos() {
+func obtenerInfoArchivo(nombreArchivo string) ([]BlockInfo, error) {
+    metadata, err := cargarMetadata() 
+    if err != nil {
+        return nil, err
+    }
+
+    info, existe := metadata[nombreArchivo]
+    if !existe {
+        return nil, fmt.Errorf("el archivo %s no existe en metadata.json", nombreArchivo)
+    }
+
+    return info, nil
+}
 
 
+func crearListaArchivos() []string {
+	metadata, err := cargarMetadata()
+	if err != nil {
+		fmt.Println("Error al cargar metadata", err)
+		return nil
+	}
+	
+	var listaDeArchivos []string
+	for nombre := range metadata {
+		listaDeArchivos = append(listaDeArchivos, nombre)
+	}
+
+	// fmt.Println(listaDeArchivos)
+	return listaDeArchivos
 }
 
 func cargarMetadata() (map[string][]BlockInfo, error) {
