@@ -20,6 +20,6 @@ func main() {
 		}
 
 		fmt.Println("Cliente conectado desde:", conn.RemoteAddr())
-		conn.Close() // cerrar inmediatamente (comportamiento mínimo)
+		conn.Close() 
 	}
 }
