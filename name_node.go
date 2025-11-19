@@ -67,7 +67,7 @@ func handle(conn net.Conn) {
 		case "INFO":
 			infoArchivo, err := obtenerInfoArchivo(argumento) 
 			if err != nil {
-				fmt.Println("Error infoArchivo")
+				fmt.Errorf("Error infoArchivo: %s", err)
 				return
 			}
 
