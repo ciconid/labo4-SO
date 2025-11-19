@@ -4,7 +4,13 @@ import (
 	"fmt"
 	"net"
 	"encoding/json"
+	"os"
 )
+
+type BlockInfo struct {
+	Block string `json:"block"`
+	Node string `json:"node"`
+}
 
 var lista_de_archivos = []string{"archivo1.txt", "archivo2.txt"} // esta lista la tiene que generar el propio name_node
 
@@ -41,9 +47,37 @@ func handle(conn net.Conn) {
 
 	comando := string(buf[:n])
 
-	if comando == "LISTAR" {
-		// Serializar a JSON
-		jsonData, _ := json.Marshal(lista_de_archivos)
-		conn.Write(jsonData)
+	// if comando == "LISTAR" {
+	// 	// Serializar a JSON
+	// 	jsonData, _ := json.Marshal(lista_de_archivos)
+	// 	conn.Write(jsonData)
+	// }
+	switch comando {
+		case "LISTAR":
+			// Serializar a JSON
+			jsonData, _ := json.Marshal(lista_de_archivos)
+			conn.Write(jsonData)
 	}
+
+}
+
+func crearListaArchivos() {
+
+
+}
+
+func cargarMetadata() (map[string][]BlockInfo, error) {
+	data, err := os.ReadFile("metadata.json")
+	if err != nil {
+		return nil, err
+	}
+
+	var metadata map[string][]BlockInfo
+
+	err = json.Unmarshal(data, &metadata)
+	if err != nil {
+		return nil, err
+	}
+
+	return metadata, nil
 }

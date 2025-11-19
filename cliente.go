@@ -6,7 +6,7 @@ import (
 	"bufio"
 	"os"
 	"strings"
-	// "encoding/json"
+	"encoding/json"
 )
 
 var name_node_socket = "192.168.100.174:9000"
@@ -27,14 +27,21 @@ func main() {
 				break loop
 			case "ls":
 				ls()
-				
+			case "put":
+				put()
+			case "get":
+				get()
+			case "info":
+				info()
+			default:
+				fmt.Println("Comando inválido")
 			}
 			
 			// if command == "exit" {
 			// 	break
 			// }
 			
-			fmt.Println("Ejecutaste:", command)
+			// fmt.Println("Ejecutaste:", command)
 		}
 
 
@@ -54,7 +61,7 @@ func ls() {
 	}
 	defer conn.Close()
 
-	fmt.Println("Conectado al servidor!")
+	// fmt.Println("Conectado al servidor!")
 
 	// Enviar comando
 	conn.Write([]byte("LISTAR"))
@@ -66,5 +73,20 @@ func ls() {
 	var lista []string
 	json.Unmarshal(buf[:n], &lista)
 
-	fmt.Println("Archivos recibidos:", lista)
+	// fmt.Println("Archivos recibidos:", lista)
+	for _, item := range lista {
+		fmt.Println(item)
+	}
+}
+
+func put() {
+	fmt.Println("Hola desde put")
+}
+
+func get() {
+	fmt.Println("Hola desde get")
+}
+
+func info() {
+	fmt.Println("Hola desde info")
 }
