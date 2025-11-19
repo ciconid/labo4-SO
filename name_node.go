@@ -3,7 +3,10 @@ package main
 import (
 	"fmt"
 	"net"
+	"encoding/json"
 )
+
+var lista_de_archivos = []string{"archivo1.txt", "archivo2.txt"} // esta lista la tiene que generar el propio name_node
 
 func main() {
 	ln, err := net.Listen("tcp", ":9000")
@@ -20,6 +23,27 @@ func main() {
 		}
 
 		fmt.Println("Cliente conectado desde:", conn.RemoteAddr())
-		conn.Close() 
+
+		go handle(conn)
+		// conn.Close() 
+	}
+}
+
+func handle(conn net.Conn) {
+	defer conn.Close()
+
+	// Leer comando simple
+	buf := make([]byte, 1024)
+	n, err := conn.Read(buf)
+	if err != nil {
+		return
+	}
+
+	comando := string(buf[:n])
+
+	if comando == "LISTAR" {
+		// Serializar a JSON
+		jsonData, _ := json.Marshal(lista_de_archivos)
+		conn.Write(jsonData)
 	}
 }
