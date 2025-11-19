@@ -5,6 +5,7 @@ import (
 	"net"
 	"encoding/json"
 	"os"
+	"strings"
 )
 
 type BlockInfo struct {
@@ -45,7 +46,16 @@ func handle(conn net.Conn) {
 		return
 	}
 
-	comando := string(buf[:n])
+	// comando := string(buf[:n])
+	input := string(buf[:n])
+	line := strings.TrimSpace(input)
+	partes := strings.SplitN(line, " ", 2)
+	
+	comando := partes[0]
+	argumento := ""
+	if len(partes) > 1 {
+		argumento = partes [1]
+	}
 
 	switch comando {
 		case "LISTAR":
@@ -55,7 +65,7 @@ func handle(conn net.Conn) {
 			jsonData, _ := json.Marshal(listaDeArchivos)
 			conn.Write(jsonData)
 		case "INFO":
-			infoArchivo, err := obtenerInfoArchivo("archivo1.txt") ///////////////////////////////////
+			infoArchivo, err := obtenerInfoArchivo(argumento) 
 			if err != nil {
 				fmt.Println("Error infoArchivo")
 				return

@@ -23,8 +23,13 @@ func main() {
 			// command := strings.TrimSpace(input)
 			line := strings.TrimSpace(input)
 			partes := strings.SplitN(line, " ", 2)
+			
 			command := partes[0]
-			argumento := partes [1]
+			argumento := ""
+			if len(partes) > 1 {
+				argumento = partes [1]
+			}
+			
 			
 			switch command {
 			case "exit":	
@@ -36,7 +41,8 @@ func main() {
 			case "get":
 				get()
 			case "info":
-				info()
+				// fmt.Printf("Command: %s - Arg: %s \n", command, argumento)
+				info(argumento)
 			default:
 				fmt.Println("Comando inválido")
 			}
@@ -91,7 +97,7 @@ func get() {
 	fmt.Println("Hola desde get")
 }
 
-func info() {
+func info(argumento string) {
 	// fmt.Println("Hola desde info")
 	conn, err := net.Dial("tcp", name_node_socket)
 	if err != nil {
@@ -100,7 +106,8 @@ func info() {
 	defer conn.Close()
 
 	// Enviar comando
-	conn.Write([]byte("INFO"))
+	comando := fmt.Sprintf("INFO %s", argumento)
+	conn.Write([]byte(comando))
 
 	// Leer respuesta
 	buf := make([]byte, 2048)
