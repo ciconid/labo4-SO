@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"os"
 	"strings"
+	"strconv"
 )
 
 type BlockInfo struct {
@@ -13,7 +14,10 @@ type BlockInfo struct {
 	Node string `json:"node"`
 }
 
-//var listaDeArchivos = []string{"archivo1.txt", "archivo2.txt"} // esta lista la tiene que generar el propio name_node
+var data_node_sockets = []string{
+	"192.168.100.1:9000",
+	"192.168.100.2:9000",
+}
 
 func main() {
 	ln, err := net.Listen("tcp", ":9000")
@@ -75,10 +79,46 @@ func handle(conn net.Conn) {
 
 			jsonData, _ := json.Marshal(infoArchivo)
 			conn.Write(jsonData)
-
+		case "PUT":
+			nombreArchivo, cantBloques, err := parseArgumento(argumento)
+			if err != nil {
+				fmt.Printf("Error PUT: %s \n", err)
+				return
+			}
+			fmt.Println(nombreArchivo)
+			fmt.Println(cantBloques)
+			
+			cantDataNodes := len(data_node_sockets)
+			dataNodeIndex := 0
+			for bloque := 1; bloque <= cantBloques; bloque++ {
+				fmt.Println(bloque, data_node_sockets[dataNodeIndex])
+				
+				dataNodeIndex++
+				if dataNodeIndex == cantDataNodes {
+					dataNodeIndex = 0
+				}
+			}
 	}
 
 }
+
+func parseArgumento(argumento string) (string, int, error) {
+    partes := strings.SplitN(argumento, " ", 2)
+    if len(partes) != 2 {
+        return "", 0, fmt.Errorf("argumento inválido: '%s'", argumento)
+    }
+
+    nombreArchivo := partes[0]
+    cantBloquesStr := partes[1]
+
+    cantBloquesNum, err := strconv.Atoi(cantBloquesStr)
+    if err != nil {
+        return "", 0, err
+    }
+
+    return nombreArchivo, cantBloquesNum, nil
+}
+
 
 func obtenerInfoArchivo(nombreArchivo string) ([]BlockInfo, error) {
     metadata, err := cargarMetadata() 
