@@ -42,7 +42,7 @@ func main() {
 			case "ls":
 				ls()
 			case "put":
-				put()
+				put(argumento)
 			case "get":
 				get()
 			case "info":
@@ -94,8 +94,36 @@ func ls() {
 	}
 }
 
-func put() {
+func put(argumento string) {
 	fmt.Println("Hola desde put")
+	// simulo que se parte el archivo original en varios bloques------------------------------------MODIF
+	cantBloques := 7
+
+	conn, err := net.Dial("tcp", name_node_socket)
+	if err != nil {
+		panic(err)
+	}
+	defer conn.Close()
+
+	// Enviar comando
+	comando := fmt.Sprintf("PUT %s %d", argumento, cantBloques)
+	conn.Write([]byte(comando))
+
+
+	
+	// conn, err := net.Dial("tcp", name_node_socket)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer conn.Close()
+
+	// // Enviar comando
+	// comando := fmt.Sprintf("STORE %s", argumento)
+	// conn.Write([]byte(comando))
+
+	// Leer respuesta
+	// buf := make([]byte, 2048)
+	// n, _ := conn.Read(buf)
 }
 
 func get() {
