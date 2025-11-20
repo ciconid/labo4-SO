@@ -9,6 +9,11 @@ import (
 	"encoding/json"
 )
 
+type BlockInfo struct {
+	Block string `json:"block"`
+	Node string `json:"node"`
+}
+
 var name_node_socket = "192.168.100.174:9000"
 
 
@@ -113,8 +118,15 @@ func info(argumento string) {
 	buf := make([]byte, 2048)
 	n, _ := conn.Read(buf)
 
-	var lista []string
+	var lista []BlockInfo
 	json.Unmarshal(buf[:n], &lista)
+	if err != nil {
+    	fmt.Println("Error al parsear:", err)
+ 	   return
+	}
+
+	fmt.Println("lista: ", lista)
+	fmt.Println("len(lista): ", len(lista))
 
 	for _, item := range lista {
 		fmt.Println(item)
