@@ -125,10 +125,11 @@ func info(argumento string) {
  	   return
 	}
 
-	fmt.Println("lista: ", lista)
-	fmt.Println("len(lista): ", len(lista))
+	// fmt.Println("lista: ", lista)
+	// fmt.Println("len(lista): ", len(lista))
 
 	for _, item := range lista {
-		fmt.Println(item)
+		fmt.Println("Block:", item.Block, "- Node:", item.Node)
+		// fmt.Println(item)
 	}
 }
