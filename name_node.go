@@ -67,9 +67,11 @@ func handle(conn net.Conn) {
 		case "INFO":
 			infoArchivo, err := obtenerInfoArchivo(argumento) 
 			if err != nil {
-				fmt.Errorf("Error infoArchivo: %s", err)
+				fmt.Printf("Error infoArchivo: %s \n", err)
 				return
 			}
+
+			fmt.Println("infoArchivo: ", infoArchivo)
 
 			jsonData, _ := json.Marshal(infoArchivo)
 			conn.Write(jsonData)
