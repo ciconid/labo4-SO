@@ -20,7 +20,7 @@ type BloqueAsignado struct {
 }
 
 var data_node_sockets = []string{
-	"192.168.100.77:9000",
+	"192.168.100.174:9000",
 	// "192.168.100.2:9000",
 }
 
