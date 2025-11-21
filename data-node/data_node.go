@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 	// "encoding/json"
-	// "os"
+	"os"
 	"strings"
 )
 
@@ -33,7 +33,7 @@ func handle(conn net.Conn) {
 	defer conn.Close()
 
 	// Leer comando del buffer
-	buf := make([]byte, 1024)
+	buf := make([]byte, 2048)
 	n, err := conn.Read(buf)
 	if err != nil {
 		return
@@ -41,6 +41,9 @@ func handle(conn net.Conn) {
 
 	// comando := string(buf[:n])
 	input := string(buf[:n])
+	fmt.Println()
+	fmt.Println(input)
+	fmt.Println()
 	line := strings.TrimSpace(input)
 	partes := strings.SplitN(line, " ", 2)
 	
@@ -52,7 +55,27 @@ func handle(conn net.Conn) {
 
 	switch comando {
 		case "STORE":
-			fmt.Println("Storing ", argumento)
+			fmt.Println()
+			fmt.Println()
+			fmt.Println("Storing ")
+			
+			partesArgumento := strings.SplitN(argumento, " ", 2)
+			nombreArchivo := partesArgumento[0]
+			contenidoArchivo := partesArgumento[1]
+
+			fmt.Println(nombreArchivo)
+			fmt.Println(contenidoArchivo)
+
+			writePath := fmt.Sprintf("./blocks/%s", nombreArchivo)
+
+			err := os.WriteFile(writePath, []byte(contenidoArchivo), 0644)
+			if err != nil {
+				fmt.Println("Error al escribir archivos", err)
+			}
+
+			
+			/* fmt.Println(argumento) */
+
 		case "READ":
 			fmt.Println("Reading ", argumento)
 
