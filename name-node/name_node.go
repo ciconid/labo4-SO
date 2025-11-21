@@ -14,6 +14,12 @@ type BlockInfo struct {
 	Node string `json:"node"`
 }
 
+type BloqueAsignado struct {
+    Block      int    `json:"block"`
+    DataNodeIP  string `json:"data_node_ip"`
+}
+
+
 var data_node_sockets = []string{
 	"192.168.100.1:9000",
 	"192.168.100.2:9000",
@@ -90,14 +96,24 @@ func handle(conn net.Conn) {
 			
 			cantDataNodes := len(data_node_sockets)
 			dataNodeIndex := 0
+
+			var asignaciones []BloqueAsignado
+
 			for bloque := 1; bloque <= cantBloques; bloque++ {
 				fmt.Println(bloque, data_node_sockets[dataNodeIndex])
+				asignaciones = append(asignaciones, BloqueAsignado{
+					Block: bloque,
+					DataNodeIP: data_node_sockets[dataNodeIndex],
+				})
 				
 				dataNodeIndex++
 				if dataNodeIndex == cantDataNodes {
 					dataNodeIndex = 0
 				}
 			}
+
+			jsonData, _ := json.Marshal((asignaciones))
+			conn.Write(jsonData)
 	}
 
 }
