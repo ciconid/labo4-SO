@@ -14,6 +14,11 @@ type BlockInfo struct {
 	Node  string `json:"node"`
 }
 
+type BloqueAsignado struct {
+	Block      int    `json:"block"`
+	DataNodeIP string `json:"data_node_ip"`
+}
+
 var name_node_socket = "192.168.100.174:9000"
 
 func main() {
@@ -105,6 +110,18 @@ func put(argumento string) {
 	// Enviar comando
 	comando := fmt.Sprintf("PUT %s %d", argumento, cantBloques)
 	conn.Write([]byte(comando))
+
+	// Leer respuesta
+	buf := make([]byte, 2048)
+	n, _ := conn.Read(buf)
+
+	var bloquesAsignados []BloqueAsignado
+	json.Unmarshal(buf[:n], &bloquesAsignados)
+
+	for _, item := range bloquesAsignados {
+		fmt.Println("Block:", item.Block, "- DataNodeIP:", item.DataNodeIP)
+		// fmt.Println(item)
+	}
 
 	// conn, err := net.Dial("tcp", name_node_socket)
 	// if err != nil {
