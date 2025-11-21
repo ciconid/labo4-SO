@@ -113,8 +113,11 @@ func put(argumento string) {
 	// }
 
 	// Dividir archivo original en bloques
+	partesArgumento := strings.SplitN(argumento, " ", 2)
+	nombreArchivo := partesArgumento[0]
 	tamanioBloque := 1024
-	bloques, err := LeeArchivoEnBloques("lotr.txt", tamanioBloque)
+	// nombreArchivo := "lotr.txt"
+	bloques, err := LeeArchivoEnBloques(nombreArchivo, tamanioBloque)
 	if err != nil {
 		panic(err)
 	}
@@ -137,9 +140,10 @@ func put(argumento string) {
 	var bloquesAsignados []BloqueAsignado
 	json.Unmarshal(buf[:n], &bloquesAsignados)
 
-	// Conexiones con cada DataNode para enviar particion
+	// Conexiones con cada DataNode para enviar bloque
 	for _, item := range bloquesAsignados {
-		fmt.Println("Enviar bloque", item.Block, "contenido", bloques[item.Block-1], "a DataNodeIP:", item.DataNodeIP)
+		fmt.Println()
+		// fmt.Println("Enviar bloque", item.Block, "contenido", string(bloques[item.Block-1]), "a DataNodeIP:", item.DataNodeIP)
 		conn, err := net.Dial("tcp", item.DataNodeIP)
 
 		if err != nil {
@@ -147,25 +151,15 @@ func put(argumento string) {
 		}
 
 		// Enviar comando
-		comando := fmt.Sprintf("STORE bloque %d %s", item.Block, bloques[item.Block-1])
+		comando := fmt.Sprintf("STORE b%d_%s %s", item.Block, nombreArchivo, bloques[item.Block-1])
+		fmt.Println(comando)
 		conn.Write([]byte(comando))
 
 		conn.Close()
 	}
 
-	// conn, err := net.Dial("tcp", name_node_socket)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// defer conn.Close()
+	// avisar a NameNode que PUT fue exitoso (para poder guardar la info en metadata.json)
 
-	// // Enviar comando
-	// comando := fmt.Sprintf("STORE %s", argumento)
-	// conn.Write([]byte(comando))
-
-	// Leer respuesta
-	// buf := make([]byte, 2048)
-	// n, _ := conn.Read(buf)
 }
 
 // LeeArchivoEnBloques lee un archivo y lo divide en bloques de tamaño blockSize.
