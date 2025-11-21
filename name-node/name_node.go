@@ -152,7 +152,7 @@ func crearListaArchivos() []string {
 }
 
 func cargarMetadata() (map[string][]BlockInfo, error) {
-	data, err := os.ReadFile("metadata.json")
+	data, err := os.ReadFile("name-node/metadata.json")
 	if err != nil {
 		return nil, err
 	}
