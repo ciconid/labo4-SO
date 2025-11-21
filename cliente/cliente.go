@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"strings"
@@ -19,7 +20,8 @@ type BloqueAsignado struct {
 	DataNodeIP string `json:"data_node_ip"`
 }
 
-var name_node_socket = "192.168.100.174:9000"
+// var name_node_socket = "192.168.100.174:9000" //windows
+var name_node_socket = "192.168.100.77:9000" //notebook
 
 func main() {
 	reader := bufio.NewReader(os.Stdin)
@@ -99,7 +101,24 @@ func ls() {
 func put(argumento string) {
 	fmt.Println("Hola desde put")
 	// simulo que se parte el archivo original en varios bloques------------------------------------MODIF
-	cantBloques := 7
+	// cantBloques := 7
+	// var bloques = []string{
+	// 	"Bloque 1",
+	// 	"Bloque 2",
+	// 	"Bloque 3",
+	// 	"Bloque 4",
+	// 	"Bloque 5",
+	// 	"Bloque 6",
+	// 	"Bloque 7",
+	// }
+
+	// Dividir archivo original en bloques
+	tamanioBloque := 1024
+	bloques, err := LeeArchivoEnBloques("lotr.txt", tamanioBloque)
+	if err != nil {
+		panic(err)
+	}
+	cantBloques := len(bloques)
 
 	conn, err := net.Dial("tcp", name_node_socket)
 	if err != nil {
@@ -118,9 +137,20 @@ func put(argumento string) {
 	var bloquesAsignados []BloqueAsignado
 	json.Unmarshal(buf[:n], &bloquesAsignados)
 
+	// Conexiones con cada DataNode para enviar particion
 	for _, item := range bloquesAsignados {
-		fmt.Println("Block:", item.Block, "- DataNodeIP:", item.DataNodeIP)
-		// fmt.Println(item)
+		fmt.Println("Enviar bloque", item.Block, "contenido", bloques[item.Block-1], "a DataNodeIP:", item.DataNodeIP)
+		conn, err := net.Dial("tcp", item.DataNodeIP)
+
+		if err != nil {
+			panic(err)
+		}
+
+		// Enviar comando
+		comando := fmt.Sprintf("STORE bloque %d %s", item.Block, bloques[item.Block-1])
+		conn.Write([]byte(comando))
+
+		conn.Close()
 	}
 
 	// conn, err := net.Dial("tcp", name_node_socket)
@@ -136,6 +166,37 @@ func put(argumento string) {
 	// Leer respuesta
 	// buf := make([]byte, 2048)
 	// n, _ := conn.Read(buf)
+}
+
+// LeeArchivoEnBloques lee un archivo y lo divide en bloques de tamaño blockSize.
+// Devuelve un slice con cada bloque como []byte.
+func LeeArchivoEnBloques(filePath string, blockSize int) ([][]byte, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	buffer := make([]byte, blockSize)
+	var blocks [][]byte
+
+	for {
+		n, err := file.Read(buffer)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+
+		// Copiamos el bloque real leído
+		block := make([]byte, n)
+		copy(block, buffer[:n])
+
+		blocks = append(blocks, block)
+	}
+
+	return blocks, nil
 }
 
 func get() {
