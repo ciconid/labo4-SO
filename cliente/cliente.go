@@ -1,64 +1,61 @@
 package main
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
 	"net"
-	"bufio"
 	"os"
 	"strings"
-	"encoding/json"
 )
 
 type BlockInfo struct {
 	Block string `json:"block"`
-	Node string `json:"node"`
+	Node  string `json:"node"`
 }
 
 var name_node_socket = "192.168.100.174:9000"
 
-
 func main() {
 	reader := bufio.NewReader(os.Stdin)
-	
-	loop:
-		for {
-			fmt.Print("> ")
-			
-			input, _ := reader.ReadString('\n')
-			// command := strings.TrimSpace(input)
-			line := strings.TrimSpace(input)
-			partes := strings.SplitN(line, " ", 2)
-			
-			command := partes[0]
-			argumento := ""
-			if len(partes) > 1 {
-				argumento = partes [1]
-			}
-			
-			
-			switch command {
-			case "exit":	
-				break loop
-			case "ls":
-				ls()
-			case "put":
-				put(argumento)
-			case "get":
-				get()
-			case "info":
-				// fmt.Printf("Command: %s - Arg: %s \n", command, argumento)
-				info(argumento)
-			default:
-				fmt.Println("Comando inválido")
-			}
-			
-			// if command == "exit" {
-			// 	break
-			// }
-			
-			// fmt.Println("Ejecutaste:", command)
+
+loop:
+	for {
+		fmt.Print("> ")
+
+		input, _ := reader.ReadString('\n')
+		// command := strings.TrimSpace(input)
+		line := strings.TrimSpace(input)
+		partes := strings.SplitN(line, " ", 2)
+
+		command := partes[0]
+		argumento := ""
+		if len(partes) > 1 {
+			argumento = partes[1]
 		}
 
+		switch command {
+		case "exit":
+			break loop
+		case "ls":
+			ls()
+		case "put":
+			put(argumento)
+		case "get":
+			get()
+		case "info":
+			// fmt.Printf("Command: %s - Arg: %s \n", command, argumento)
+			info(argumento)
+		default:
+			fmt.Println("Comando inválido")
+		}
+
+		// if command == "exit" {
+		// 	break
+		// }
+
+		// fmt.Println("Ejecutaste:", command)
+	}
 
 	// conn, err := net.Dial("tcp", name_node_socket)
 	// if err != nil {
@@ -109,8 +106,6 @@ func put(argumento string) {
 	comando := fmt.Sprintf("PUT %s %d", argumento, cantBloques)
 	conn.Write([]byte(comando))
 
-
-	
 	// conn, err := net.Dial("tcp", name_node_socket)
 	// if err != nil {
 	// 	panic(err)
@@ -148,10 +143,10 @@ func info(argumento string) {
 
 	var lista []BlockInfo
 	json.Unmarshal(buf[:n], &lista)
-	if err != nil {
-    	fmt.Println("Error al parsear:", err)
- 	   return
-	}
+	// if err != nil {
+	// 	fmt.Println("Error al parsear:", err)
+	// 	return
+	// }
 
 	// fmt.Println("lista: ", lista)
 	// fmt.Println("len(lista): ", len(lista))
