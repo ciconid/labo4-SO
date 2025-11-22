@@ -254,6 +254,37 @@ func get(nombreArchivo string) {
 		}()
 	}
 
+	err := reconstruirArchivo(nombreArchivo, bloquesRecuperados)
+	if err != nil {
+		fmt.Println("Error reconstruyendo archivo:", err)
+	} else {
+		fmt.Println("Archivo reconstruido con éxito")
+	}
+
+}
+
+func reconstruirArchivo(nombreArchivo string, bloques [][]byte) error {
+	// Crear buffer donde se unirá todo
+	var final []byte
+
+	// Concatenar bloques en orden
+	for i, bloque := range bloques {
+		if bloque == nil {
+			return fmt.Errorf("el bloque %d está vacío o no fue recuperado", i+1)
+		}
+		final = append(final, bloque...)
+	}
+
+	// Guardar en el archivo final
+	outputPath := fmt.Sprintf("./recuperados/%s", nombreArchivo)
+
+	err := os.WriteFile(outputPath, final, 0644)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Archivo reconstruido correctamente en:", outputPath)
+	return nil
 }
 
 func info(argumento string) {
