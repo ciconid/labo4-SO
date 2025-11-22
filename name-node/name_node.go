@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"bufio"
 )
 
 type BlockInfo struct {
@@ -21,7 +22,7 @@ type BloqueAsignado struct {
 
 var data_node_sockets = []string{
 	"192.168.100.174:9000",
-	// "192.168.100.2:9000",
+	"192.168.100.97:9000",
 }
 
 func main() {
@@ -113,6 +114,25 @@ func handle(conn net.Conn) {
 
 		jsonData, _ := json.Marshal((asignaciones))
 		conn.Write(jsonData)
+
+
+		// esperar confirmacion de transferencia completa
+		reader := bufio.NewReader(conn)
+		msg, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Println("Error leyendo", err)
+			return
+		}
+
+		if strings.TrimSpace(msg) == "TRANSFER_COMPLETE" {
+			fmt.Println("Cliente termino la transferencia con exito")
+			err = actualizarMetadata(nombreArchivo, asignaciones)
+			if err != nil {
+				fmt.Println("Error al actualizar metadata")
+			} 
+		}
+
+
 	}
 
 }
@@ -178,4 +198,45 @@ func cargarMetadata() (map[string][]BlockInfo, error) {
 	}
 
 	return metadata, nil
+}
+
+func actualizarMetadata(fileName string, nuevosBloques []BloqueAsignado) error {
+    // 1) Cargar metadata existente
+    metadata, err := cargarMetadata()
+    if err != nil {
+        return err
+    }
+
+    // 2) Reemplazar o crear la entrada del archivo
+	bloques := convertirBloques(nuevosBloques)
+    metadata[fileName] = bloques
+
+    // 3) Guardar en metadata.json
+    return guardarMetadata(metadata)
+}
+
+func guardarMetadata(metadata map[string][]BlockInfo) error {
+    const metadataPath = "name-node/metadata.json"
+
+	//metadataConvertida := convertirBloques(metadata)
+
+    output, err := json.MarshalIndent(metadata, "", "  ")
+    if err != nil {
+        return err
+    }
+
+    return os.WriteFile(metadataPath, output, 0644)
+}
+
+func convertirBloques(bloques []BloqueAsignado) []BlockInfo {
+    resultado := make([]BlockInfo, len(bloques))
+
+    for i, b := range bloques {
+        resultado[i] = BlockInfo{
+            Block: strconv.Itoa(b.Block),
+            Node:  b.DataNodeIP,
+        }
+    }
+
+    return resultado
 }
