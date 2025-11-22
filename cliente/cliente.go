@@ -203,7 +203,14 @@ func get() {
 }
 
 func info(argumento string) {
-	// fmt.Println("Hola desde info")
+	lista := recuperarInfoDeArchivo(argumento)
+
+	for _, item := range lista {
+		fmt.Println("Block:", item.Block, "- Node:", item.Node)
+	}
+}
+
+func recuperarInfoDeArchivo(nombreArchivo string) []BlockInfo {
 	conn, err := net.Dial("tcp", name_node_socket)
 	if err != nil {
 		panic(err)
@@ -211,7 +218,7 @@ func info(argumento string) {
 	defer conn.Close()
 
 	// Enviar comando
-	comando := fmt.Sprintf("INFO %s", argumento)
+	comando := fmt.Sprintf("INFO %s", nombreArchivo)
 	conn.Write([]byte(comando))
 
 	// Leer respuesta
@@ -220,16 +227,6 @@ func info(argumento string) {
 
 	var lista []BlockInfo
 	json.Unmarshal(buf[:n], &lista)
-	// if err != nil {
-	// 	fmt.Println("Error al parsear:", err)
-	// 	return
-	// }
 
-	// fmt.Println("lista: ", lista)
-	// fmt.Println("len(lista): ", len(lista))
-
-	for _, item := range lista {
-		fmt.Println("Block:", item.Block, "- Node:", item.Node)
-		// fmt.Println(item)
-	}
+	return lista
 }
