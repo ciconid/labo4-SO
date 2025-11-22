@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -49,7 +50,7 @@ loop:
 		case "put":
 			put(argumento)
 		case "get":
-			get()
+			get(argumento)
 		case "info":
 			// fmt.Printf("Command: %s - Arg: %s \n", command, argumento)
 			info(argumento)
@@ -198,8 +199,61 @@ func LeeArchivoEnBloques(filePath string, blockSize int) ([][]byte, error) {
 	return blocks, nil
 }
 
-func get() {
+func get(nombreArchivo string) {
 	fmt.Println("Hola desde get")
+	var lista []BlockInfo = recuperarInfoDeArchivo(nombreArchivo)
+
+	for _, item := range lista {
+		fmt.Println("Block:", item.Block, "- Node:", item.Node)
+	}
+
+	// Necesitamos saber cuántos bloques habrá para crear el slice final
+	bloquesRecuperados := make([][]byte, len(lista))
+
+	for _, info := range lista {
+		// Convertir el Block (string) → índice int
+		numBloque, err := strconv.Atoi(info.Block)
+		if err != nil {
+			fmt.Println("Block inválido:", info.Block)
+			continue
+		}
+		indice := numBloque - 1 // bloque 1 → índice 0
+
+		// 1. Conectar al DataNode
+		conn, err := net.Dial("tcp", info.Node)
+		if err != nil {
+			fmt.Println("Error conectando a", info.Node, ":", err)
+			continue
+		}
+
+		func() {
+			defer conn.Close()
+
+			// 2. Solicitar el bloque
+			req := fmt.Sprintf("READ b%s_%s\n", info.Block, nombreArchivo)
+			_, err = conn.Write([]byte(req))
+			if err != nil {
+				fmt.Println("Error enviando solicitud:", err)
+				return
+			}
+
+			// 3. Leer el bloque completo
+			data, err := io.ReadAll(conn)
+			if err != nil {
+				fmt.Println("Error leyendo bloque", info.Block, ":", err)
+				return
+			}
+
+			fmt.Println()
+			fmt.Printf("Bloque %s recibido (%d bytes)\n", info.Block, len(data))
+
+			// 4. Guardar en la posición correcta del slice
+			bloquesRecuperados[indice] = data
+
+			// fmt.Println("\n", bloquesRecuperados)
+		}()
+	}
+
 }
 
 func info(argumento string) {
