@@ -152,13 +152,18 @@ func put(argumento string) {
 
 		// Enviar comando
 		comando := fmt.Sprintf("STORE b%d_%s %s", item.Block, nombreArchivo, bloques[item.Block-1])
-		fmt.Println(comando)
+		// fmt.Println(comando)
 		conn.Write([]byte(comando))
 
 		conn.Close()
 	}
 
 	// avisar a NameNode que PUT fue exitoso (para poder guardar la info en metadata.json)
+	msg := "TRANSFER_COMPLETE\n"
+	_, err = conn.Write([]byte(msg))
+	if err != nil {
+		panic(err)
+	}
 
 }
 
