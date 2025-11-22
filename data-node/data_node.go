@@ -77,7 +77,32 @@ func handle(conn net.Conn) {
 			/* fmt.Println(argumento) */
 
 		case "READ":
-			fmt.Println("Reading ", argumento)
+			nombreArchivo := argumento
+			fmt.Println()
+			fmt.Println()
+			fmt.Println("Reading ", nombreArchivo)
+
+			// Ruta del archivo a leer
+			readPath := fmt.Sprintf("./blocks/%s", nombreArchivo)
+
+			// Leer todo el contenido del archivo
+			data, err := os.ReadFile(readPath)
+			if err != nil {
+				fmt.Println("Error al leer archivo:", err)
+				conn.Write([]byte("ERROR al leer archivo")) // respuesta mínima
+				return
+			}
+
+			// Enviar el archivo al cliente (solo los bytes)
+			_, err = conn.Write(data)
+			if err != nil {
+				fmt.Println("Error enviando archivo:", err)
+				return
+			}
+
+
+
+
 
 	}
 
