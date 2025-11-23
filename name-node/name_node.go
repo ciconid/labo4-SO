@@ -22,7 +22,7 @@ type BloqueAsignado struct {
 
 var data_node_sockets = []string{
 	"192.168.100.174:9000",
-	"192.168.100.97:9000",
+	//"192.168.100.97:9000",
 }
 
 func main() {
@@ -97,13 +97,13 @@ func handle(conn net.Conn) {
 		cantDataNodes := len(data_node_sockets)
 		dataNodeIndex := 0
 
-		var asignaciones []BloqueAsignado
+		var asignaciones []BlockInfo
 
 		for bloque := 1; bloque <= cantBloques; bloque++ {
 			fmt.Println(bloque, data_node_sockets[dataNodeIndex])
-			asignaciones = append(asignaciones, BloqueAsignado{
-				Block:      bloque,
-				DataNodeIP: data_node_sockets[dataNodeIndex],
+			asignaciones = append(asignaciones, BlockInfo{
+				Block:      strconv.Itoa(bloque),
+				Node: data_node_sockets[dataNodeIndex],
 			})
 
 			dataNodeIndex++
@@ -200,7 +200,7 @@ func cargarMetadata() (map[string][]BlockInfo, error) {
 	return metadata, nil
 }
 
-func actualizarMetadata(fileName string, nuevosBloques []BloqueAsignado) error {
+func actualizarMetadata(fileName string, nuevosBloques []BlockInfo) error {
     // 1) Cargar metadata existente
     metadata, err := cargarMetadata()
     if err != nil {
@@ -208,8 +208,8 @@ func actualizarMetadata(fileName string, nuevosBloques []BloqueAsignado) error {
     }
 
     // 2) Reemplazar o crear la entrada del archivo
-	bloques := convertirBloques(nuevosBloques)
-    metadata[fileName] = bloques
+	//bloques := convertirBloques(nuevosBloques)
+    metadata[fileName] = nuevosBloques
 
     // 3) Guardar en metadata.json
     return guardarMetadata(metadata)
