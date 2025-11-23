@@ -138,21 +138,27 @@ func put(argumento string) {
 	buf := make([]byte, 2048)
 	n, _ := conn.Read(buf)
 
-	var bloquesAsignados []BloqueAsignado
+	var bloquesAsignados []BlockInfo
 	json.Unmarshal(buf[:n], &bloquesAsignados)
 
 	// Conexiones con cada DataNode para enviar bloque
 	for _, item := range bloquesAsignados {
 		fmt.Println()
 		// fmt.Println("Enviar bloque", item.Block, "contenido", string(bloques[item.Block-1]), "a DataNodeIP:", item.DataNodeIP)
-		conn, err := net.Dial("tcp", item.DataNodeIP)
+		conn, err := net.Dial("tcp", item.Node)
 
 		if err != nil {
+			fmt.Println("CLIENTE-PUT: Error conexion con", item.Node)
 			panic(err)
 		}
 
 		// Enviar comando
-		comando := fmt.Sprintf("STORE b%d_%s %s", item.Block, nombreArchivo, bloques[item.Block-1])
+		blockIndex, err := strconv.Atoi(item.Block)
+		if err != nil {
+			fmt.Println("Error al convertir de string a int")
+			return
+		}
+		comando := fmt.Sprintf("STORE b%s_%s %s", item.Block, nombreArchivo, bloques[blockIndex-1])
 		// fmt.Println(comando)
 		conn.Write([]byte(comando))
 
