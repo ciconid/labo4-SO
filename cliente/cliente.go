@@ -16,10 +16,10 @@ type BlockInfo struct {
 	Node  string `json:"node"`
 }
 
-type BloqueAsignado struct {
-	Block      int    `json:"block"`
-	DataNodeIP string `json:"data_node_ip"`
-}
+// type BloqueAsignado struct {
+// 	Block      int    `json:"block"`
+// 	DataNodeIP string `json:"data_node_ip"`
+// }
 
 // var name_node_socket = "192.168.100.174:9000" //windows
 var name_node_socket = "192.168.100.77:9000" //notebook
