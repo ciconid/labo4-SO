@@ -315,6 +315,11 @@ func reconstruirArchivo(nombreArchivo string, bloques [][]byte) error {
 func info(argumento string) {
 	lista := recuperarInfoDeArchivo(argumento)
 
+	if lista == nil {
+		fmt.Println("El archivo", argumento, "no existe")
+		return
+	}
+
 	for _, item := range lista {
 		fmt.Println("Block:", item.Block, "- Node:", item.Node)
 	}
