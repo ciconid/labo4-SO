@@ -88,8 +88,8 @@ func handle(conn net.Conn) {
 			fmt.Printf("Error PUT: %s \n", err)
 			return
 		}
-		fmt.Println(nombreArchivo)
-		fmt.Println(cantBloques)
+		//fmt.Println(nombreArchivo)
+		//fmt.Println(cantBloques)
 
 		cantDataNodes := len(data_node_sockets)
 		dataNodeIndex := 0
@@ -202,7 +202,6 @@ func actualizarMetadata(fileName string, nuevosBloques []BlockInfo) error {
 	}
 
 	// 2) Reemplazar o crear la entrada del archivo
-	//bloques := convertirBloques(nuevosBloques)
 	metadata[fileName] = nuevosBloques
 
 	// 3) Guardar en metadata.json
@@ -212,8 +211,6 @@ func actualizarMetadata(fileName string, nuevosBloques []BlockInfo) error {
 func guardarMetadata(metadata map[string][]BlockInfo) error {
 	const metadataPath = "name-node/metadata.json"
 
-	//metadataConvertida := convertirBloques(metadata)
-
 	output, err := json.MarshalIndent(metadata, "", "  ")
 	if err != nil {
 		return err
@@ -221,16 +218,3 @@ func guardarMetadata(metadata map[string][]BlockInfo) error {
 
 	return os.WriteFile(metadataPath, output, 0644)
 }
-
-/* func convertirBloques(bloques []BloqueAsignado) []BlockInfo {
-	resultado := make([]BlockInfo, len(bloques))
-
-	for i, b := range bloques {
-		resultado[i] = BlockInfo{
-			Block: strconv.Itoa(b.Block),
-			Node:  b.DataNodeIP,
-		}
-	}
-
-	return resultado
-} */
