@@ -27,6 +27,7 @@ func main() {
 	fmt.Println("  put <archivo>     → subir archivo")
 	fmt.Println("  get <archivo>     → descargar archivo")
 	fmt.Println("  info <archivo>    → ver metadata")
+	fmt.Println("  cat <archivo>    → cat remoto")
 	fmt.Println("  help              → mostrar esta ayuda")
 	fmt.Println()
 
@@ -75,6 +76,13 @@ loop:
 				break
 			}
 			info(argumento)
+		case "cat":
+			if argumento == "" {
+				fmt.Println("Uso incorrecto del comando")
+				fmt.Println("Uso: > cat <archivo>")
+				break
+			}
+			cat(argumento)
 		case "help":
 			if argumento != "" {
 				fmt.Println("Uso incorrecto del comando")
@@ -86,6 +94,7 @@ loop:
 			fmt.Println("  put <archivo>     → subir archivo")
 			fmt.Println("  get <archivo>     → descargar archivo")
 			fmt.Println("  info <archivo>    → ver metadata")
+			fmt.Println("  cat <archivo>    → cat remoto")
 			fmt.Println("  help              → mostrar esta ayuda")
 		default:
 			fmt.Println("Comando inválido")
@@ -314,6 +323,111 @@ func get(nombreArchivo string) {
 		fmt.Println("Archivo guardado con éxito")
 	}
 
+}
+
+func cat(nombreArchivo string) {
+	abort := false
+
+	// fmt.Println("Hola desde cat")
+	var lista []BlockInfo = recuperarInfoDeArchivo(nombreArchivo)
+
+	if lista == nil {
+		fmt.Println("CLIENTE-CAT: El archivo", nombreArchivo, "no existe")
+		return
+	}
+
+	// for _, item := range lista {
+	// 	fmt.Println("Block:", item.Block, "- Node:", item.Node)
+	// }
+	// fmt.Println()
+
+	// Necesitamos saber cuántos bloques habrá para crear el slice final
+	bloquesRecuperados := make([][]byte, len(lista))
+
+	for _, info := range lista {
+		// Convertir el Block (string) → índice int
+		numBloque, err := strconv.Atoi(info.Block)
+		if err != nil {
+			fmt.Println("Block inválido:", info.Block)
+			continue
+		}
+		indice := numBloque - 1 // bloque 1 → índice 0
+
+		// 1. Conectar al DataNode
+		timeout := 2 * time.Second
+		conn, err := net.DialTimeout("tcp", info.Node, timeout)
+		if err != nil {
+			fmt.Println("Error conectando a", info.Node, ":", err)
+			fmt.Println("CLIENTE-CAT: Abortando CAT de", nombreArchivo)
+			continue
+		}
+
+		func() {
+			defer conn.Close()
+
+			// 2. Solicitar el bloque
+			req := fmt.Sprintf("READ b%s_%s\n", info.Block, nombreArchivo)
+			_, err = conn.Write([]byte(req))
+			if err != nil {
+				fmt.Println("Error enviando solicitud:", err)
+				abort = true
+				return
+			}
+
+			// 3. Leer el bloque completo
+			data, err := io.ReadAll(conn)
+			if err != nil {
+				fmt.Println("Error leyendo bloque", info.Block, ":", err)
+				abort = true
+				return
+			}
+
+			if len(data) == 21 {
+				s := string(data)
+				if s == "ERROR al leer archivo" {
+					fmt.Println(s, nombreArchivo)
+					fmt.Println("CLIENTE-CAT: Abortando CAT de", nombreArchivo)
+					abort = true
+					return
+				}
+			}
+
+			// fmt.Println(data)
+			// fmt.Printf("Bloque %s recibido (%d bytes)\n", info.Block, len(data))
+
+			// 4. Guardar en la posición correcta del slice
+			bloquesRecuperados[indice] = data
+		}()
+
+		if abort {
+			break
+		}
+	}
+
+	if abort {
+		return
+	}
+
+	fmt.Println(bytes2String(bloquesRecuperados))
+}
+
+func bytes2String(blocks [][]byte) string {
+	// Calculamos el tamaño total para evitar realocaciones
+	total := 0
+	for _, b := range blocks {
+		total += len(b)
+	}
+
+	// Creamos un slice de bytes de tamaño final
+	final := make([]byte, 0, total)
+
+	// Concatenamos usando append(..., bloque...)
+	for _, bloque := range blocks {
+		final = append(final, bloque...)
+	}
+
+	// Convertimos el []byte a string
+	return string(final)
 }
 
 // Reconstruye y guarda el archivo solicitado
