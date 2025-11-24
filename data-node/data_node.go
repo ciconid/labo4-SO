@@ -1,11 +1,13 @@
+// Ejecutar desde ./data-node/
+
 package main
 
 import (
 	"fmt"
 	"net"
-	// "encoding/json"
 	"os"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -13,19 +15,20 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Escuchando en puerto 9000...")
+	logYPrint("Escuchando en puerto 9000...")
 
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
-			fmt.Println("Error aceptando conexión:", err)
+			msg := fmt.Sprintf("Error aceptando conexión: %s", err)
+			logYPrint(msg)
 			continue
 		}
 
-		fmt.Println("Cliente conectado desde:", conn.RemoteAddr())
+		msg := fmt.Sprintf("Cliente conectado desde: %s", conn.RemoteAddr())
+		logYPrint(msg)
 
 		go handle(conn)
-		// conn.Close() 
 	}
 }
 
@@ -39,11 +42,10 @@ func handle(conn net.Conn) {
 		return
 	}
 
-	// comando := string(buf[:n])
 	input := string(buf[:n])
-	fmt.Println()
+	/* fmt.Println()
 	fmt.Println(input)
-	fmt.Println()
+	fmt.Println() */
 	line := strings.TrimSpace(input)
 	partes := strings.SplitN(line, " ", 2)
 	
@@ -55,32 +57,33 @@ func handle(conn net.Conn) {
 
 	switch comando {
 		case "STORE":
+			/* fmt.Println()
 			fmt.Println()
-			fmt.Println()
-			fmt.Println("Storing ")
+			fmt.Println("Storing ") */
 			
 			partesArgumento := strings.SplitN(argumento, " ", 2)
 			nombreArchivo := partesArgumento[0]
 			contenidoArchivo := partesArgumento[1]
 
-			fmt.Println(nombreArchivo)
-			fmt.Println(contenidoArchivo)
+			msg := fmt.Sprintf("STORE de %s", nombreArchivo)
+			logYPrint(msg)
+			/* fmt.Println(contenidoArchivo) */
 
 			writePath := fmt.Sprintf("./blocks/%s", nombreArchivo)
 
 			err := os.WriteFile(writePath, []byte(contenidoArchivo), 0644)
 			if err != nil {
-				fmt.Println("Error al escribir archivos", err)
+				msg := fmt.Sprintf("Error al escribir archivos %s", err)
+				logYPrint(msg)
 			}
-
-			
-			/* fmt.Println(argumento) */
-
 		case "READ":
 			nombreArchivo := argumento
+			/* fmt.Println()
 			fmt.Println()
-			fmt.Println()
-			fmt.Println("Reading ", nombreArchivo)
+			fmt.Println("Reading ", nombreArchivo) */
+
+			msg := fmt.Sprintf("READ de %s", nombreArchivo)
+			logYPrint(msg)
 
 			// Ruta del archivo a leer
 			readPath := fmt.Sprintf("./blocks/%s", nombreArchivo)
@@ -88,7 +91,8 @@ func handle(conn net.Conn) {
 			// Leer todo el contenido del archivo
 			data, err := os.ReadFile(readPath)
 			if err != nil {
-				fmt.Println("Error al leer archivo:", err)
+				msg := fmt.Sprintf("Error al leer archivo: %s", err)
+				logYPrint(msg)
 				conn.Write([]byte("ERROR al leer archivo")) // respuesta mínima
 				return
 			}
@@ -96,14 +100,48 @@ func handle(conn net.Conn) {
 			// Enviar el archivo al cliente (solo los bytes)
 			_, err = conn.Write(data)
 			if err != nil {
-				fmt.Println("Error enviando archivo:", err)
+				msg := fmt.Sprintf("Error enviando archivo: %s", err)
+				logYPrint(msg)
 				return
 			}
-
-
-
-
-
 	}
+}
 
+func logYPrint(msg string) {
+	// Abrir archivo en modo append
+	f, err := os.OpenFile("./logs/data-node.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Error al abrir log:", err)
+		return
+	}
+	defer f.Close()
+
+	// Timestamp
+	timestamp := time.Now().Format("2006-01-02 15:04:05")
+
+	// Línea con timestamp
+	logLine := fmt.Sprintf("[%s] %s\n", timestamp, msg)
+
+	// Escribir al archivo e imprimir por consola
+	f.WriteString(logLine)
+	fmt.Println(msg)
+}
+
+func logOnly(msg string) {
+	// Abrir archivo en modo append
+	f, err := os.OpenFile("./logs/data-node.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Error al abrir log:", err)
+		return
+	}
+	defer f.Close()
+
+	// Timestamp
+	timestamp := time.Now().Format("2006-01-02 15:04:05")
+
+	// Línea con timestamp
+	logLine := fmt.Sprintf("[%s] %s\n", timestamp, msg)
+
+	// Escribir al archivo e imprimir por consola
+	f.WriteString(logLine)
 }
