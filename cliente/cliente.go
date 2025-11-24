@@ -298,7 +298,8 @@ func info(argumento string) {
 func recuperarInfoDeArchivo(nombreArchivo string) []BlockInfo {
 	conn, err := net.Dial("tcp", name_node_socket)
 	if err != nil {
-		panic(err)
+		fmt.Println("Error al conectar con name_node", name_node_socket)
+		return nil
 	}
 	defer conn.Close()
 
