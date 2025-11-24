@@ -71,7 +71,6 @@ func handle(conn net.Conn) {
 	case "LISTAR":
 		listaDeArchivos := crearListaArchivos()
 
-		// Serializar a JSON
 		jsonData, _ := json.Marshal(listaDeArchivos)
 		conn.Write(jsonData)
 	case "INFO":
@@ -178,7 +177,6 @@ func crearListaArchivos() []string {
 		listaDeArchivos = append(listaDeArchivos, nombre)
 	}
 
-	// fmt.Println(listaDeArchivos)
 	return listaDeArchivos
 }
 
