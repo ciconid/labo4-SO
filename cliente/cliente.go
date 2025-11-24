@@ -225,8 +225,15 @@ func LeeArchivoEnBloques(filePath string, blockSize int) ([][]byte, error) {
 }
 
 func get(nombreArchivo string) {
+	abort := false
+
 	fmt.Println("Hola desde get")
 	var lista []BlockInfo = recuperarInfoDeArchivo(nombreArchivo)
+
+	if lista == nil {
+		fmt.Println("CLIENTE-GET: El archivo", nombreArchivo, "no existe")
+		return
+	}
 
 	for _, item := range lista {
 		fmt.Println("Block:", item.Block, "- Node:", item.Node)
@@ -262,6 +269,7 @@ func get(nombreArchivo string) {
 			_, err = conn.Write([]byte(req))
 			if err != nil {
 				fmt.Println("Error enviando solicitud:", err)
+				abort = true
 				return
 			}
 
@@ -269,14 +277,34 @@ func get(nombreArchivo string) {
 			data, err := io.ReadAll(conn)
 			if err != nil {
 				fmt.Println("Error leyendo bloque", info.Block, ":", err)
+				abort = true
 				return
 			}
 
+			if len(data) == 21 {
+				s := string(data)
+				if s == "ERROR al leer archivo" {
+					fmt.Println(s, nombreArchivo)
+					fmt.Println("CLIENTE-GET: Abortando GET de", nombreArchivo)
+					abort = true
+					return
+				}
+			}
+
+			// fmt.Println(data)
 			fmt.Printf("Bloque %s recibido (%d bytes)\n", info.Block, len(data))
 
 			// 4. Guardar en la posición correcta del slice
 			bloquesRecuperados[indice] = data
 		}()
+
+		if abort {
+			break
+		}
+	}
+
+	if abort {
+		return
 	}
 
 	err := reconstruirArchivo(nombreArchivo, bloquesRecuperados)
