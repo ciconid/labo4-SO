@@ -367,14 +367,10 @@ func cat(nombreArchivo string) {
 	var lista []BlockInfo = recuperarInfoDeArchivo(nombreArchivo)
 
 	if lista == nil {
-		fmt.Println("CLIENTE-CAT: El archivo", nombreArchivo, "no existe")
+		msg := fmt.Sprintf("CLIENTE-CAT: El archivo %s no existe", nombreArchivo)
+		logYPrint(msg)
 		return
 	}
-
-	// for _, item := range lista {
-	// 	fmt.Println("Block:", item.Block, "- Node:", item.Node)
-	// }
-	// fmt.Println()
 
 	// Necesitamos saber cuántos bloques habrá para crear el slice final
 	bloquesRecuperados := make([][]byte, len(lista))
@@ -383,7 +379,8 @@ func cat(nombreArchivo string) {
 		// Convertir el Block (string) → índice int
 		numBloque, err := strconv.Atoi(info.Block)
 		if err != nil {
-			fmt.Println("Block inválido:", info.Block)
+			msg := fmt.Sprintf("Block inválido: %s", info.Block)
+			logYPrint(msg)
 			continue
 		}
 		indice := numBloque - 1 // bloque 1 → índice 0
@@ -392,8 +389,10 @@ func cat(nombreArchivo string) {
 		timeout := 2 * time.Second
 		conn, err := net.DialTimeout("tcp", info.Node, timeout)
 		if err != nil {
-			fmt.Println("Error conectando a", info.Node, ":", err)
-			fmt.Println("CLIENTE-CAT: Abortando CAT de", nombreArchivo)
+			msg := fmt.Sprintf("Error conectando a %s: %s", info.Node, err)
+			logYPrint(msg)
+			msg = fmt.Sprintf("CLIENTE-CAT: Abortando CAT de %s", nombreArchivo)
+			logYPrint(msg)
 			continue
 		}
 
@@ -404,7 +403,8 @@ func cat(nombreArchivo string) {
 			req := fmt.Sprintf("READ b%s_%s\n", info.Block, nombreArchivo)
 			_, err = conn.Write([]byte(req))
 			if err != nil {
-				fmt.Println("Error enviando solicitud:", err)
+				msg := fmt.Sprintf("Error enviando solicitud: %s", err)
+				logYPrint(msg)
 				abort = true
 				return
 			}
@@ -412,7 +412,8 @@ func cat(nombreArchivo string) {
 			// 3. Leer el bloque completo
 			data, err := io.ReadAll(conn)
 			if err != nil {
-				fmt.Println("Error leyendo bloque", info.Block, ":", err)
+				msg := fmt.Sprintf("Error leyendo bloque %s: %s", info.Block, err)
+				logYPrint(msg)
 				abort = true
 				return
 			}
@@ -420,15 +421,14 @@ func cat(nombreArchivo string) {
 			if len(data) == 21 {
 				s := string(data)
 				if s == "ERROR al leer archivo" {
-					fmt.Println(s, nombreArchivo)
-					fmt.Println("CLIENTE-CAT: Abortando CAT de", nombreArchivo)
+					msg := fmt.Sprintf("%s %s", s, nombreArchivo)
+					logYPrint(msg)
+					msg = fmt.Sprintf("CLIENTE-CAT: Abortando CAT de %s", nombreArchivo)
+					logYPrint(msg)
 					abort = true
 					return
 				}
 			}
-
-			// fmt.Println(data)
-			// fmt.Printf("Bloque %s recibido (%d bytes)\n", info.Block, len(data))
 
 			// 4. Guardar en la posición correcta del slice
 			bloquesRecuperados[indice] = data
@@ -493,7 +493,8 @@ func info(argumento string) {
 	lista := recuperarInfoDeArchivo(argumento)
 
 	if lista == nil {
-		fmt.Println("El archivo", argumento, "no existe")
+		msg := fmt.Sprintf("El archivo %s no existe", argumento)
+		logYPrint(msg)
 		return
 	}
 

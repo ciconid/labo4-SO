@@ -269,3 +269,24 @@
 [2025-11-24 11:46:51]   Bloque 7 recibido (47 bytes)
 [2025-11-24 11:46:51] Archivo guardado con éxito
 [2025-11-24 11:47:05] Ejecutando cat
+[2025-11-24 12:44:17] Ejecutando ls
+[2025-11-24 12:44:21] Ejecutando cat
+[2025-11-24 12:44:40] Ejecutando put
+[2025-11-24 12:44:40] Iniciando PUT de s
+[2025-11-24 12:44:40]   Enviando comando PUT s 1 a name_node 192.168.100.103:9000
+[2025-11-24 12:44:40]   Subiendo bloque 1 a 192.168.100.174:9000
+[2025-11-24 12:44:40] Transferencia de s completa
+[2025-11-24 12:44:43] Ejecutando cat
+[2025-11-24 12:49:45] Ejecutando cat
+[2025-11-24 12:49:54] Ejecutando cat
+[2025-11-24 12:49:56] CLIENTE-CAT: El archivo sfsf no existe
+[2025-11-24 12:50:26] Ejecutando cat
+[2025-11-24 12:50:28] Error conectando a 192.168.100.174:9000: dial tcp 192.168.100.174:9000: i/o timeout
+[2025-11-24 12:50:28] CLIENTE-CAT: Abortando CAT de s
+[2025-11-24 12:50:58] Ejecutando cat
+[2025-11-24 12:50:58] ERROR al leer archivo s
+[2025-11-24 12:50:58] CLIENTE-CAT: Abortando CAT de s
+[2025-11-24 12:52:56] Ejecutando ls
+[2025-11-24 12:53:00] Ejecutando info
+[2025-11-24 12:53:03] Ejecutando info
+[2025-11-24 12:53:04] El archivo sdfds no existe
