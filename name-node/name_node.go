@@ -8,17 +8,13 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type BlockInfo struct {
 	Block string `json:"block"`
 	Node  string `json:"node"`
 }
-
-/* type BloqueAsignado struct {
-	Block      int    `json:"block"`
-	DataNodeIP string `json:"data_node_ip"`
-} */
 
 var data_node_sockets = []string{
 	"192.168.100.174:9000",
@@ -30,19 +26,21 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Escuchando en puerto 9000...")
+	log("Escuchando en puerto 9000...")
 
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
 			fmt.Println("Error aceptando conexión:", err)
+			msg := fmt.Sprintf("Error aceptando conexión: %s", err)
+			log(msg)
 			continue
 		}
 
-		fmt.Println("Cliente conectado desde:", conn.RemoteAddr())
+		msg := fmt.Sprintf("Cliente conectado desde: %s", conn.RemoteAddr())
+		log(msg)
 
 		go handle(conn)
-		// conn.Close()
 	}
 }
 
@@ -69,27 +67,30 @@ func handle(conn net.Conn) {
 
 	switch comando {
 	case "LISTAR":
+		log("Ejecutando LISTAR")
 		listaDeArchivos := crearListaArchivos()
 
 		jsonData, _ := json.Marshal(listaDeArchivos)
 		conn.Write(jsonData)
 	case "INFO":
+		log("Ejecutando INFO")
 		infoArchivo, err := obtenerInfoArchivo(argumento)
 		if err != nil {
-			fmt.Printf("Error infoArchivo: %s \n", err)
+			msg := fmt.Sprintf("Error infoArchivo: %s", err)
+			log(msg)
 			return
 		}
 
 		jsonData, _ := json.Marshal(infoArchivo)
 		conn.Write(jsonData)
 	case "PUT":
+		log("Ejecutando PUT")
 		nombreArchivo, cantBloques, err := parseArgumento(argumento)
 		if err != nil {
-			fmt.Printf("Error PUT: %s \n", err)
+			msg := fmt.Sprintf("Error PUT: %s", err)
+			log(msg)
 			return
 		}
-		//fmt.Println(nombreArchivo)
-		//fmt.Println(cantBloques)
 
 		cantDataNodes := len(data_node_sockets)
 		dataNodeIndex := 0
@@ -116,20 +117,19 @@ func handle(conn net.Conn) {
 		reader := bufio.NewReader(conn)
 		msg, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Println("Error leyendo", err)
+			msg := fmt.Sprintf("Error leyendo %s", err)
+			log(msg)
 			return
 		}
 
 		if strings.TrimSpace(msg) == "TRANSFER_COMPLETE" {
-			fmt.Println("Cliente termino la transferencia con exito")
+			log("Cliente termino la transferencia con exito")
 			err = actualizarMetadata(nombreArchivo, asignaciones)
 			if err != nil {
-				fmt.Println("Error al actualizar metadata")
+				log("Error al actualizar metadata")
 			}
 		}
-
 	}
-
 }
 
 func parseArgumento(argumento string) (string, int, error) {
@@ -166,7 +166,8 @@ func obtenerInfoArchivo(nombreArchivo string) ([]BlockInfo, error) {
 func crearListaArchivos() []string {
 	metadata, err := cargarMetadata()
 	if err != nil {
-		fmt.Println("Error al cargar metadata", err)
+		msg := fmt.Sprintf("Error al cargar metadata %s", err)
+		log(msg)
 		return nil
 	}
 
@@ -179,7 +180,7 @@ func crearListaArchivos() []string {
 }
 
 func cargarMetadata() (map[string][]BlockInfo, error) {
-	data, err := os.ReadFile("name-node/metadata.json")
+	data, err := os.ReadFile("./metadata.json")
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +210,7 @@ func actualizarMetadata(fileName string, nuevosBloques []BlockInfo) error {
 }
 
 func guardarMetadata(metadata map[string][]BlockInfo) error {
-	const metadataPath = "name-node/metadata.json"
+	const metadataPath = "./metadata.json"
 
 	output, err := json.MarshalIndent(metadata, "", "  ")
 	if err != nil {
@@ -217,4 +218,27 @@ func guardarMetadata(metadata map[string][]BlockInfo) error {
 	}
 
 	return os.WriteFile(metadataPath, output, 0644)
+}
+
+func log(msg string) {
+	// Crear directorio logs si no existe
+	//os.MkdirAll("./logs", 0755)
+
+	// Abrir archivo en modo append
+	f, err := os.OpenFile("./logs/name-node.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Error al abrir log:", err)
+		return
+	}
+	defer f.Close()
+
+	// Timestamp
+	timestamp := time.Now().Format("2006-01-02 15:04:05")
+
+	// Línea con timestamp
+	logLine := fmt.Sprintf("[%s] %s\n", timestamp, msg)
+
+	// Escribir al archivo e imprimir por consola
+	f.WriteString(logLine)
+	fmt.Println(msg)
 }
