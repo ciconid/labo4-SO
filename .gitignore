@@ -1,1 +1,4 @@
 t.txt
+
+./data-node/blocks/*
+!./data-node/blocks/.gitkeep
