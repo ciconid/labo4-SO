@@ -1,13 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"net"
 	"os"
 	"strconv"
 	"strings"
-	"bufio"
 )
 
 type BlockInfo struct {
@@ -15,14 +15,14 @@ type BlockInfo struct {
 	Node  string `json:"node"`
 }
 
-type BloqueAsignado struct {
+/* type BloqueAsignado struct {
 	Block      int    `json:"block"`
 	DataNodeIP string `json:"data_node_ip"`
-}
+} */
 
 var data_node_sockets = []string{
 	"192.168.100.174:9000",
-	//"192.168.100.97:9000",
+	"192.168.100.97:9000",
 }
 
 func main() {
@@ -102,8 +102,8 @@ func handle(conn net.Conn) {
 		for bloque := 1; bloque <= cantBloques; bloque++ {
 			fmt.Println(bloque, data_node_sockets[dataNodeIndex])
 			asignaciones = append(asignaciones, BlockInfo{
-				Block:      strconv.Itoa(bloque),
-				Node: data_node_sockets[dataNodeIndex],
+				Block: strconv.Itoa(bloque),
+				Node:  data_node_sockets[dataNodeIndex],
 			})
 
 			dataNodeIndex++
@@ -114,7 +114,6 @@ func handle(conn net.Conn) {
 
 		jsonData, _ := json.Marshal((asignaciones))
 		conn.Write(jsonData)
-
 
 		// esperar confirmacion de transferencia completa
 		reader := bufio.NewReader(conn)
@@ -129,9 +128,8 @@ func handle(conn net.Conn) {
 			err = actualizarMetadata(nombreArchivo, asignaciones)
 			if err != nil {
 				fmt.Println("Error al actualizar metadata")
-			} 
+			}
 		}
-
 
 	}
 
@@ -201,42 +199,42 @@ func cargarMetadata() (map[string][]BlockInfo, error) {
 }
 
 func actualizarMetadata(fileName string, nuevosBloques []BlockInfo) error {
-    // 1) Cargar metadata existente
-    metadata, err := cargarMetadata()
-    if err != nil {
-        return err
-    }
+	// 1) Cargar metadata existente
+	metadata, err := cargarMetadata()
+	if err != nil {
+		return err
+	}
 
-    // 2) Reemplazar o crear la entrada del archivo
+	// 2) Reemplazar o crear la entrada del archivo
 	//bloques := convertirBloques(nuevosBloques)
-    metadata[fileName] = nuevosBloques
+	metadata[fileName] = nuevosBloques
 
-    // 3) Guardar en metadata.json
-    return guardarMetadata(metadata)
+	// 3) Guardar en metadata.json
+	return guardarMetadata(metadata)
 }
 
 func guardarMetadata(metadata map[string][]BlockInfo) error {
-    const metadataPath = "name-node/metadata.json"
+	const metadataPath = "name-node/metadata.json"
 
 	//metadataConvertida := convertirBloques(metadata)
 
-    output, err := json.MarshalIndent(metadata, "", "  ")
-    if err != nil {
-        return err
-    }
+	output, err := json.MarshalIndent(metadata, "", "  ")
+	if err != nil {
+		return err
+	}
 
-    return os.WriteFile(metadataPath, output, 0644)
+	return os.WriteFile(metadataPath, output, 0644)
 }
 
-func convertirBloques(bloques []BloqueAsignado) []BlockInfo {
-    resultado := make([]BlockInfo, len(bloques))
+/* func convertirBloques(bloques []BloqueAsignado) []BlockInfo {
+	resultado := make([]BlockInfo, len(bloques))
 
-    for i, b := range bloques {
-        resultado[i] = BlockInfo{
-            Block: strconv.Itoa(b.Block),
-            Node:  b.DataNodeIP,
-        }
-    }
+	for i, b := range bloques {
+		resultado[i] = BlockInfo{
+			Block: strconv.Itoa(b.Block),
+			Node:  b.DataNodeIP,
+		}
+	}
 
-    return resultado
-}
+	return resultado
+} */
