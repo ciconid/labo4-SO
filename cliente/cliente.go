@@ -17,23 +17,24 @@ type BlockInfo struct {
 	Node  string `json:"node"`
 }
 
-// type BloqueAsignado struct {
-// 	Block      int    `json:"block"`
-// 	DataNodeIP string `json:"data_node_ip"`
-// }
-
-// var name_node_socket = "192.168.100.174:9000" //windows
-var name_node_socket = "192.168.100.77:9000" //notebook
+var name_node_socket = "192.168.100.77:9000"
 
 func main() {
 	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Println("Comandos disponibles:")
+	fmt.Println("  ls                → listar archivos")
+	fmt.Println("  put <archivo>     → subir archivo")
+	fmt.Println("  get <archivo>     → descargar archivo")
+	fmt.Println("  info <archivo>    → ver metadata")
+	fmt.Println("  help              → mostrar esta ayuda")
+	fmt.Println()
 
 loop:
 	for {
 		fmt.Print("> ")
 
 		input, _ := reader.ReadString('\n')
-		// command := strings.TrimSpace(input)
 		line := strings.TrimSpace(input)
 		partes := strings.SplitN(line, " ", 2)
 
@@ -47,14 +48,45 @@ loop:
 		case "exit":
 			break loop
 		case "ls":
+			if argumento != "" {
+				fmt.Println("Uso incorrecto del comando")
+				fmt.Println("Uso: > ls")
+				break
+			}
 			ls()
 		case "put":
+			if argumento == "" {
+				fmt.Println("Uso incorrecto del comando")
+				fmt.Println("Uso: > put <archivo>")
+				break
+			}
 			put(argumento)
 		case "get":
+			if argumento == "" {
+				fmt.Println("Uso incorrecto del comando")
+				fmt.Println("Uso: > get <archivo>")
+				break
+			}
 			get(argumento)
 		case "info":
-			// fmt.Printf("Command: %s - Arg: %s \n", command, argumento)
+			if argumento == "" {
+				fmt.Println("Uso incorrecto del comando")
+				fmt.Println("Uso: > info <archivo>")
+				break
+			}
 			info(argumento)
+		case "help":
+			if argumento != "" {
+				fmt.Println("Uso incorrecto del comando")
+				fmt.Println("Uso: > help")
+				break
+			}
+			fmt.Println("Comandos disponibles:")
+			fmt.Println("  ls                → listar archivos")
+			fmt.Println("  put <archivo>     → subir archivo")
+			fmt.Println("  get <archivo>     → descargar archivo")
+			fmt.Println("  info <archivo>    → ver metadata")
+			fmt.Println("  help              → mostrar esta ayuda")
 		default:
 			fmt.Println("Comando inválido")
 		}
