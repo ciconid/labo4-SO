@@ -80,8 +80,6 @@ func handle(conn net.Conn) {
 			return
 		}
 
-		fmt.Println("infoArchivo: ", infoArchivo)
-
 		jsonData, _ := json.Marshal(infoArchivo)
 		conn.Write(jsonData)
 	case "PUT":
