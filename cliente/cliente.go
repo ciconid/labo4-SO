@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type BlockInfo struct {
@@ -77,11 +78,10 @@ loop:
 func ls() {
 	conn, err := net.Dial("tcp", name_node_socket)
 	if err != nil {
-		panic(err)
+		fmt.Println("Error al conectar con name_node", name_node_socket)
+		return
 	}
 	defer conn.Close()
-
-	// fmt.Println("Conectado al servidor!")
 
 	// Enviar comando
 	conn.Write([]byte("LISTAR"))
@@ -90,10 +90,10 @@ func ls() {
 	buf := make([]byte, 2048)
 	n, _ := conn.Read(buf)
 
+	// Procesar y mostrar respuesta
 	var lista []string
 	json.Unmarshal(buf[:n], &lista)
 
-	// fmt.Println("Archivos recibidos:", lista)
 	for _, item := range lista {
 		fmt.Println(item)
 	}
@@ -101,17 +101,6 @@ func ls() {
 
 func put(argumento string) {
 	fmt.Println("Hola desde put")
-	// simulo que se parte el archivo original en varios bloques------------------------------------MODIF
-	// cantBloques := 7
-	// var bloques = []string{
-	// 	"Bloque 1",
-	// 	"Bloque 2",
-	// 	"Bloque 3",
-	// 	"Bloque 4",
-	// 	"Bloque 5",
-	// 	"Bloque 6",
-	// 	"Bloque 7",
-	// }
 
 	// Dividir archivo original en bloques
 	partesArgumento := strings.SplitN(argumento, " ", 2)
@@ -120,7 +109,9 @@ func put(argumento string) {
 	// nombreArchivo := "lotr.txt"
 	bloques, err := LeeArchivoEnBloques(nombreArchivo, tamanioBloque)
 	if err != nil {
-		panic(err)
+		fmt.Println("CLIENTE-PUT: Error al leer bloques")
+		return
+		//panic(err)
 	}
 	cantBloques := len(bloques)
 
@@ -145,11 +136,14 @@ func put(argumento string) {
 	for _, item := range bloquesAsignados {
 		fmt.Println()
 		// fmt.Println("Enviar bloque", item.Block, "contenido", string(bloques[item.Block-1]), "a DataNodeIP:", item.DataNodeIP)
-		conn, err := net.Dial("tcp", item.Node)
+		timeout := 2 * time.Second
+		conn, err := net.DialTimeout("tcp", item.Node, timeout)
 
 		if err != nil {
-			fmt.Println("CLIENTE-PUT: Error conexion con", item.Node)
-			panic(err)
+			fmt.Println("CLIENTE-PUT: Error conexion con el nodo", item.Node)
+			fmt.Println("Abortando PUT de", nombreArchivo)
+			return
+			//panic(err)
 		}
 
 		// Enviar comando
