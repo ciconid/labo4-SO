@@ -1,3 +1,5 @@
+// Ejecutar desde la raiz (labo4-SO)
+
 package main
 
 import (
@@ -17,7 +19,7 @@ type BlockInfo struct {
 	Node  string `json:"node"`
 }
 
-var name_node_socket = "192.168.100.77:9000"
+var name_node_socket = "192.168.100.103:9000"
 
 func main() {
 	reader := bufio.NewReader(os.Stdin)
@@ -49,43 +51,49 @@ loop:
 		case "exit":
 			break loop
 		case "ls":
+			logOnly("Ejecutando ls")
 			if argumento != "" {
-				fmt.Println("Uso incorrecto del comando")
+				logYPrint("Uso incorrecto del comando")
 				fmt.Println("Uso: > ls")
 				break
 			}
 			ls()
 		case "put":
+			logOnly("Ejecutando put")
 			if argumento == "" {
-				fmt.Println("Uso incorrecto del comando")
+				logYPrint("Uso incorrecto del comando")
 				fmt.Println("Uso: > put <archivo>")
 				break
 			}
 			put(argumento)
 		case "get":
+			logOnly("Ejecutando get")
 			if argumento == "" {
-				fmt.Println("Uso incorrecto del comando")
+				logYPrint("Uso incorrecto del comando")
 				fmt.Println("Uso: > get <archivo>")
 				break
 			}
 			get(argumento)
 		case "info":
+			logOnly("Ejecutando info")
 			if argumento == "" {
-				fmt.Println("Uso incorrecto del comando")
+				logYPrint("Uso incorrecto del comando")
 				fmt.Println("Uso: > info <archivo>")
 				break
 			}
 			info(argumento)
 		case "cat":
+			logOnly("Ejecutando cat")
 			if argumento == "" {
-				fmt.Println("Uso incorrecto del comando")
+				logYPrint("Uso incorrecto del comando")
 				fmt.Println("Uso: > cat <archivo>")
 				break
 			}
 			cat(argumento)
 		case "help":
+			logOnly("Ejecutando help")
 			if argumento != "" {
-				fmt.Println("Uso incorrecto del comando")
+				logYPrint("Uso incorrecto del comando")
 				fmt.Println("Uso: > help")
 				break
 			}
@@ -97,7 +105,7 @@ loop:
 			fmt.Println("  cat <archivo>    → cat remoto")
 			fmt.Println("  help              → mostrar esta ayuda")
 		default:
-			fmt.Println("Comando inválido")
+			logYPrint("Comando inválido")
 		}
 	}
 }
@@ -105,7 +113,8 @@ loop:
 func ls() {
 	conn, err := net.Dial("tcp", name_node_socket)
 	if err != nil {
-		fmt.Println("Error al conectar con name_node", name_node_socket)
+		msg := fmt.Sprintf("Error al conectar con name_node %s", name_node_socket)
+		logYPrint(msg)
 		return
 	}
 	defer conn.Close()
@@ -134,17 +143,23 @@ func put(argumento string) {
 	nombreArchivo := partesArgumento[0]
 	tamanioBloque := 1024
 
+	msg := fmt.Sprintf("Iniciando PUT de %s", nombreArchivo)
+	logYPrint(msg)
+
 	bloques, err := LeeArchivoEnBloques(nombreArchivo, tamanioBloque)
 	if err != nil {
-		fmt.Println("CLIENTE-PUT: Error al leer archivo", nombreArchivo)
-		fmt.Println("Abortando PUT de", nombreArchivo)
+		msg := fmt.Sprintf("CLIENTE-PUT: Error al leer archivo %s", nombreArchivo)
+		logYPrint(msg)
+		msg = fmt.Sprintf("Abortando PUT de %s", nombreArchivo)
+		logYPrint(msg)
 		return
 	}
 	cantBloques := len(bloques)
 
 	conn, err := net.Dial("tcp", name_node_socket)
 	if err != nil {
-		fmt.Println("Error al conectar con name_node", name_node_socket)
+		msg := fmt.Sprintf("Error al conectar con name_node %s", name_node_socket)
+		logYPrint(msg)
 		return
 	}
 	defer conn.Close()
@@ -152,6 +167,9 @@ func put(argumento string) {
 	// Enviar comando
 	comando := fmt.Sprintf("PUT %s %d", argumento, cantBloques)
 	conn.Write([]byte(comando))
+
+	msg = fmt.Sprintf("  Enviando comando %s a name_node %s", comando, name_node_socket)
+	logOnly(msg)
 
 	// Leer respuesta
 	buf := make([]byte, 2048)
@@ -166,8 +184,10 @@ func put(argumento string) {
 			timeout := 2 * time.Second
 			conn, err := net.DialTimeout("tcp", item.Node, timeout)
 			if err != nil {
-				fmt.Println("CLIENTE-PUT: Error conexion con el nodo", item.Node)
-				fmt.Println("Abortando PUT de", nombreArchivo)
+				msg := fmt.Sprintf("CLIENTE-PUT: Error conexion con el nodo %s", item.Node)
+				logYPrint(msg)
+				msg = fmt.Sprintf("Abortando PUT de %s", nombreArchivo)
+				logYPrint(msg)
 				abort = true
 				return
 			}
@@ -176,12 +196,15 @@ func put(argumento string) {
 			// Enviar comando
 			blockIndex, err := strconv.Atoi(item.Block)
 			if err != nil {
-				fmt.Println("Error al convertir de string a int")
+				logYPrint("Error al convertir de string a int")
 				abort = true
 				return
 			}
 			comando := fmt.Sprintf("STORE b%s_%s %s", item.Block, nombreArchivo, bloques[blockIndex-1])
 			conn.Write([]byte(comando))
+
+			msg := fmt.Sprintf("  Subiendo bloque %s a %s", item.Block, item.Node)
+			logYPrint(msg)
 		}()
 
 		if abort {
@@ -194,12 +217,14 @@ func put(argumento string) {
 	}
 
 	// avisar a NameNode que PUT fue exitoso (para poder guardar la info en metadata.json)
-	msg := "TRANSFER_COMPLETE\n"
+	msg = "TRANSFER_COMPLETE\n"
 	_, err = conn.Write([]byte(msg))
 	if err != nil {
-		fmt.Println("CLIENTE-PUT: Error al enviar TRANSFER_COMPLETE al name_node")
+		logYPrint("CLIENTE-PUT: Error al enviar TRANSFER_COMPLETE al name_node")
 		return
 	}
+	msg = fmt.Sprintf("Transferencia de %s completa", nombreArchivo)
+	logYPrint(msg)
 }
 
 // LeeArchivoEnBloques lee un archivo y lo divide en bloques de tamaño blockSize.
@@ -236,16 +261,17 @@ func LeeArchivoEnBloques(filePath string, blockSize int) ([][]byte, error) {
 func get(nombreArchivo string) {
 	abort := false
 
-	fmt.Println("Hola desde get")
 	var lista []BlockInfo = recuperarInfoDeArchivo(nombreArchivo)
 
 	if lista == nil {
-		fmt.Println("CLIENTE-GET: El archivo", nombreArchivo, "no existe")
+		msg := fmt.Sprintf("CLIENTE-GET: El archivo %s no existe", nombreArchivo)
+		logYPrint(msg)
 		return
 	}
 
 	for _, item := range lista {
-		fmt.Println("Block:", item.Block, "- Node:", item.Node)
+		msg := fmt.Sprintf("Block: %s - Node: %s", item.Block, item.Node)
+		logYPrint(msg)
 	}
 	fmt.Println()
 
@@ -256,7 +282,8 @@ func get(nombreArchivo string) {
 		// Convertir el Block (string) → índice int
 		numBloque, err := strconv.Atoi(info.Block)
 		if err != nil {
-			fmt.Println("Block inválido:", info.Block)
+			msg := fmt.Sprintf("Block inválido: %s", info.Block)
+			logYPrint(msg)
 			continue
 		}
 		indice := numBloque - 1 // bloque 1 → índice 0
@@ -265,9 +292,11 @@ func get(nombreArchivo string) {
 		timeout := 2 * time.Second
 		conn, err := net.DialTimeout("tcp", info.Node, timeout)
 		if err != nil {
-			fmt.Println("Error conectando a", info.Node, ":", err)
-			fmt.Println("CLIENTE-GET: Abortando GET de", nombreArchivo)
-			continue
+			msg := fmt.Sprintf("Error conectando a %s: %s", info.Node, err)
+			logYPrint(msg)
+			msg = fmt.Sprintf("CLIENTE-GET: Abortando GET de %s", nombreArchivo)
+			logYPrint(msg)
+			return
 		}
 
 		func() {
@@ -277,7 +306,8 @@ func get(nombreArchivo string) {
 			req := fmt.Sprintf("READ b%s_%s\n", info.Block, nombreArchivo)
 			_, err = conn.Write([]byte(req))
 			if err != nil {
-				fmt.Println("Error enviando solicitud:", err)
+				msg := fmt.Sprintf("Error enviando solicitud: %s", err)
+				logYPrint(msg)
 				abort = true
 				return
 			}
@@ -285,7 +315,8 @@ func get(nombreArchivo string) {
 			// 3. Leer el bloque completo
 			data, err := io.ReadAll(conn)
 			if err != nil {
-				fmt.Println("Error leyendo bloque", info.Block, ":", err)
+				msg := fmt.Sprintf("Error leyendo bloque %s: %s", info.Block, err)
+				logYPrint(msg)
 				abort = true
 				return
 			}
@@ -293,15 +324,18 @@ func get(nombreArchivo string) {
 			if len(data) == 21 {
 				s := string(data)
 				if s == "ERROR al leer archivo" {
-					fmt.Println(s, nombreArchivo)
-					fmt.Println("CLIENTE-GET: Abortando GET de", nombreArchivo)
+					msg := fmt.Sprintf("%s %s", s, nombreArchivo)
+					logYPrint(msg)
+					msg = fmt.Sprintf("CLIENTE-GET: Abortando GET de %s", nombreArchivo)
+					logYPrint(msg)
 					abort = true
 					return
 				}
 			}
 
 			// fmt.Println(data)
-			fmt.Printf("Bloque %s recibido (%d bytes)\n", info.Block, len(data))
+			msg := fmt.Sprintf("  Bloque %s recibido (%d bytes)", info.Block, len(data))
+			logYPrint(msg)
 
 			// 4. Guardar en la posición correcta del slice
 			bloquesRecuperados[indice] = data
@@ -318,9 +352,10 @@ func get(nombreArchivo string) {
 
 	err := reconstruirArchivo(nombreArchivo, bloquesRecuperados)
 	if err != nil {
-		fmt.Println("Error guardando archivo:", err)
+		msg := fmt.Sprintf("Error guardando archivo: %s", err)
+		logYPrint(msg)
 	} else {
-		fmt.Println("Archivo guardado con éxito")
+		logYPrint("Archivo guardado con éxito")
 	}
 
 }
@@ -487,4 +522,43 @@ func recuperarInfoDeArchivo(nombreArchivo string) []BlockInfo {
 	json.Unmarshal(buf[:n], &lista)
 
 	return lista
+}
+
+func logYPrint(msg string) {
+	// Abrir archivo en modo append
+	f, err := os.OpenFile("./cliente/logs/cliente.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Error al abrir log:", err)
+		return
+	}
+	defer f.Close()
+
+	// Timestamp
+	timestamp := time.Now().Format("2006-01-02 15:04:05")
+
+	// Línea con timestamp
+	logLine := fmt.Sprintf("[%s] %s\n", timestamp, msg)
+
+	// Escribir al archivo e imprimir por consola
+	f.WriteString(logLine)
+	fmt.Println(msg)
+}
+
+func logOnly(msg string) {
+	// Abrir archivo en modo append
+	f, err := os.OpenFile("./cliente/logs/cliente.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Error al abrir log:", err)
+		return
+	}
+	defer f.Close()
+
+	// Timestamp
+	timestamp := time.Now().Format("2006-01-02 15:04:05")
+
+	// Línea con timestamp
+	logLine := fmt.Sprintf("[%s] %s\n", timestamp, msg)
+
+	// Escribir al archivo e imprimir por consola
+	f.WriteString(logLine)
 }

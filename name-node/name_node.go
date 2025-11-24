@@ -221,9 +221,6 @@ func guardarMetadata(metadata map[string][]BlockInfo) error {
 }
 
 func log(msg string) {
-	// Crear directorio logs si no existe
-	//os.MkdirAll("./logs", 0755)
-
 	// Abrir archivo en modo append
 	f, err := os.OpenFile("./logs/name-node.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
