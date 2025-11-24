@@ -199,6 +199,7 @@ func get(nombreArchivo string) {
 	for _, item := range lista {
 		fmt.Println("Block:", item.Block, "- Node:", item.Node)
 	}
+	fmt.Println()
 
 	// Necesitamos saber cuántos bloques habrá para crear el slice final
 	bloquesRecuperados := make([][]byte, len(lista))
@@ -213,9 +214,11 @@ func get(nombreArchivo string) {
 		indice := numBloque - 1 // bloque 1 → índice 0
 
 		// 1. Conectar al DataNode
-		conn, err := net.Dial("tcp", info.Node)
+		timeout := 2 * time.Second
+		conn, err := net.DialTimeout("tcp", info.Node, timeout)
 		if err != nil {
 			fmt.Println("Error conectando a", info.Node, ":", err)
+			fmt.Println("CLIENTE-GET: Abortando GET de", nombreArchivo)
 			continue
 		}
 
@@ -237,25 +240,23 @@ func get(nombreArchivo string) {
 				return
 			}
 
-			fmt.Println()
 			fmt.Printf("Bloque %s recibido (%d bytes)\n", info.Block, len(data))
 
 			// 4. Guardar en la posición correcta del slice
 			bloquesRecuperados[indice] = data
-
-			// fmt.Println("\n", bloquesRecuperados)
 		}()
 	}
 
 	err := reconstruirArchivo(nombreArchivo, bloquesRecuperados)
 	if err != nil {
-		fmt.Println("Error reconstruyendo archivo:", err)
+		fmt.Println("Error guardando archivo:", err)
 	} else {
-		fmt.Println("Archivo reconstruido con éxito")
+		fmt.Println("Archivo guardado con éxito")
 	}
 
 }
 
+// Reconstruye y guarda el archivo solicitado
 func reconstruirArchivo(nombreArchivo string, bloques [][]byte) error {
 	// Crear buffer donde se unirá todo
 	var final []byte
@@ -269,14 +270,13 @@ func reconstruirArchivo(nombreArchivo string, bloques [][]byte) error {
 	}
 
 	// Guardar en el archivo final
-	outputPath := fmt.Sprintf("./recuperados/%s", nombreArchivo)
+	outputPath := fmt.Sprintf("./%s", nombreArchivo)
 
 	err := os.WriteFile(outputPath, final, 0644)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("Archivo reconstruido correctamente en:", outputPath)
 	return nil
 }
 
