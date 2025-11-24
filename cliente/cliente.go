@@ -58,21 +58,7 @@ loop:
 		default:
 			fmt.Println("Comando inválido")
 		}
-
-		// if command == "exit" {
-		// 	break
-		// }
-
-		// fmt.Println("Ejecutaste:", command)
 	}
-
-	// conn, err := net.Dial("tcp", name_node_socket)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// defer conn.Close()
-
-	// fmt.Println("Conectado al servidor!")
 }
 
 func ls() {
@@ -100,24 +86,26 @@ func ls() {
 }
 
 func put(argumento string) {
+	abort := false
+
 	fmt.Println("Hola desde put")
 
 	// Dividir archivo original en bloques
 	partesArgumento := strings.SplitN(argumento, " ", 2)
 	nombreArchivo := partesArgumento[0]
 	tamanioBloque := 1024
-	// nombreArchivo := "lotr.txt"
+
 	bloques, err := LeeArchivoEnBloques(nombreArchivo, tamanioBloque)
 	if err != nil {
 		fmt.Println("CLIENTE-PUT: Error al leer bloques")
 		return
-		//panic(err)
 	}
 	cantBloques := len(bloques)
 
 	conn, err := net.Dial("tcp", name_node_socket)
 	if err != nil {
-		panic(err)
+		fmt.Println("Error al conectar con name_node", name_node_socket)
+		return
 	}
 	defer conn.Close()
 
@@ -134,38 +122,44 @@ func put(argumento string) {
 
 	// Conexiones con cada DataNode para enviar bloque
 	for _, item := range bloquesAsignados {
-		fmt.Println()
-		// fmt.Println("Enviar bloque", item.Block, "contenido", string(bloques[item.Block-1]), "a DataNodeIP:", item.DataNodeIP)
-		timeout := 2 * time.Second
-		conn, err := net.DialTimeout("tcp", item.Node, timeout)
+		func() {
+			timeout := 2 * time.Second
+			conn, err := net.DialTimeout("tcp", item.Node, timeout)
+			if err != nil {
+				fmt.Println("CLIENTE-PUT: Error conexion con el nodo", item.Node)
+				fmt.Println("Abortando PUT de", nombreArchivo)
+				abort = true
+				return
+			}
+			defer conn.Close()
 
-		if err != nil {
-			fmt.Println("CLIENTE-PUT: Error conexion con el nodo", item.Node)
-			fmt.Println("Abortando PUT de", nombreArchivo)
-			return
-			//panic(err)
+			// Enviar comando
+			blockIndex, err := strconv.Atoi(item.Block)
+			if err != nil {
+				fmt.Println("Error al convertir de string a int")
+				abort = true
+				return
+			}
+			comando := fmt.Sprintf("STORE b%s_%s %s", item.Block, nombreArchivo, bloques[blockIndex-1])
+			conn.Write([]byte(comando))
+		}()
+
+		if abort {
+			break
 		}
+	}
 
-		// Enviar comando
-		blockIndex, err := strconv.Atoi(item.Block)
-		if err != nil {
-			fmt.Println("Error al convertir de string a int")
-			return
-		}
-		comando := fmt.Sprintf("STORE b%s_%s %s", item.Block, nombreArchivo, bloques[blockIndex-1])
-		// fmt.Println(comando)
-		conn.Write([]byte(comando))
-
-		conn.Close()
+	if abort {
+		return
 	}
 
 	// avisar a NameNode que PUT fue exitoso (para poder guardar la info en metadata.json)
 	msg := "TRANSFER_COMPLETE\n"
 	_, err = conn.Write([]byte(msg))
 	if err != nil {
-		panic(err)
+		fmt.Println("CLIENTE-PUT: Error al enviar TRANSFER_COMPLETE al name_node")
+		return
 	}
-
 }
 
 // LeeArchivoEnBloques lee un archivo y lo divide en bloques de tamaño blockSize.
