@@ -88,8 +88,6 @@ func ls() {
 func put(argumento string) {
 	abort := false
 
-	fmt.Println("Hola desde put")
-
 	// Dividir archivo original en bloques
 	partesArgumento := strings.SplitN(argumento, " ", 2)
 	nombreArchivo := partesArgumento[0]
@@ -97,7 +95,8 @@ func put(argumento string) {
 
 	bloques, err := LeeArchivoEnBloques(nombreArchivo, tamanioBloque)
 	if err != nil {
-		fmt.Println("CLIENTE-PUT: Error al leer bloques")
+		fmt.Println("CLIENTE-PUT: Error al leer archivo", nombreArchivo)
+		fmt.Println("Abortando PUT de", nombreArchivo)
 		return
 	}
 	cantBloques := len(bloques)
