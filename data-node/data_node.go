@@ -43,9 +43,6 @@ func handle(conn net.Conn) {
 	}
 
 	input := string(buf[:n])
-	/* fmt.Println()
-	fmt.Println(input)
-	fmt.Println() */
 	line := strings.TrimSpace(input)
 	partes := strings.SplitN(line, " ", 2)
 	
@@ -56,18 +53,13 @@ func handle(conn net.Conn) {
 	}
 
 	switch comando {
-		case "STORE":
-			/* fmt.Println()
-			fmt.Println()
-			fmt.Println("Storing ") */
-			
+		case "STORE":			
 			partesArgumento := strings.SplitN(argumento, " ", 2)
 			nombreArchivo := partesArgumento[0]
 			contenidoArchivo := partesArgumento[1]
 
 			msg := fmt.Sprintf("STORE de %s", nombreArchivo)
 			logYPrint(msg)
-			/* fmt.Println(contenidoArchivo) */
 
 			writePath := fmt.Sprintf("./blocks/%s", nombreArchivo)
 
@@ -78,9 +70,6 @@ func handle(conn net.Conn) {
 			}
 		case "READ":
 			nombreArchivo := argumento
-			/* fmt.Println()
-			fmt.Println()
-			fmt.Println("Reading ", nombreArchivo) */
 
 			msg := fmt.Sprintf("READ de %s", nombreArchivo)
 			logYPrint(msg)
